@@ -1,0 +1,163 @@
+{
+  "name": "Trial Task Workflow",
+  "version": 1,
+  "exportedAt": "2026-06-23T00:00:00.000Z",
+  "graph": {
+    "nodes": [
+      {
+        "id": "request-inputs_main",
+        "type": "request-inputs",
+        "position": { "x": 0, "y": 320 },
+        "deletable": false,
+        "data": {
+          "fields": [
+            {
+              "id": "f_text",
+              "key": "text_field",
+              "label": "text_field",
+              "fieldType": "text_field",
+              "value": "Product: Wireless Bluetooth Headphones. Features: Noise cancellation, 30-hour battery, foldable design."
+            },
+            {
+              "id": "f_img",
+              "key": "image_field",
+              "label": "image_field",
+              "fieldType": "image_field",
+              "value": ""
+            }
+          ]
+        }
+      },
+      {
+        "id": "gemini_1",
+        "type": "gemini",
+        "position": { "x": 440, "y": -80 },
+        "data": {
+          "model": "gemini-3.1-pro",
+          "values": {
+            "prompt": "",
+            "systemPrompt": "You are a marketing copywriter. Write a one-paragraph product description."
+          },
+          "settings": { "temperature": 1, "maxOutputTokens": 2048, "topP": 0.95 },
+          "settingsOpen": false
+        }
+      },
+      {
+        "id": "crop_1",
+        "type": "crop-image",
+        "position": { "x": 420, "y": 360 },
+        "data": {
+          "values": { "inputImage": "", "x": 20, "y": 20, "width": 60, "height": 60 }
+        }
+      },
+      {
+        "id": "crop_2",
+        "type": "crop-image",
+        "position": { "x": 420, "y": 760 },
+        "data": {
+          "values": { "inputImage": "", "x": 0, "y": 0, "width": 100, "height": 50 }
+        }
+      },
+      {
+        "id": "gemini_2",
+        "type": "gemini",
+        "position": { "x": 880, "y": 0 },
+        "data": {
+          "model": "gemini-3.1-pro",
+          "values": {
+            "prompt": "",
+            "systemPrompt": "Condense the following product description into a tweet-length hook (under 240 characters)."
+          },
+          "settings": { "temperature": 1, "maxOutputTokens": 2048, "topP": 0.95 },
+          "settingsOpen": false
+        }
+      },
+      {
+        "id": "gemini_3",
+        "type": "gemini",
+        "position": { "x": 1320, "y": 220 },
+        "data": {
+          "model": "gemini-3.1-pro",
+          "values": {
+            "prompt": "",
+            "systemPrompt": "You are a social media manager. Combine the tweet hook and the two product crops into a final marketing post."
+          },
+          "settings": { "temperature": 1, "maxOutputTokens": 2048, "topP": 0.95 },
+          "settingsOpen": false
+        }
+      },
+      {
+        "id": "response_main",
+        "type": "response",
+        "position": { "x": 1780, "y": 360 },
+        "deletable": false,
+        "data": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "e_text_g1",
+        "source": "request-inputs_main",
+        "sourceHandle": "out:f_text",
+        "target": "gemini_1",
+        "targetHandle": "in:prompt"
+      },
+      {
+        "id": "e_img_c1",
+        "source": "request-inputs_main",
+        "sourceHandle": "out:f_img",
+        "target": "crop_1",
+        "targetHandle": "in:inputImage"
+      },
+      {
+        "id": "e_img_c2",
+        "source": "request-inputs_main",
+        "sourceHandle": "out:f_img",
+        "target": "crop_2",
+        "targetHandle": "in:inputImage"
+      },
+      {
+        "id": "e_g1_g2",
+        "source": "gemini_1",
+        "sourceHandle": "out:response",
+        "target": "gemini_2",
+        "targetHandle": "in:prompt"
+      },
+      {
+        "id": "e_g2_g3",
+        "source": "gemini_2",
+        "sourceHandle": "out:response",
+        "target": "gemini_3",
+        "targetHandle": "in:prompt"
+      },
+      {
+        "id": "e_c1_g3",
+        "source": "crop_1",
+        "sourceHandle": "out:output",
+        "target": "gemini_3",
+        "targetHandle": "in:image"
+      },
+      {
+        "id": "e_c2_g3",
+        "source": "crop_2",
+        "sourceHandle": "out:output",
+        "target": "gemini_3",
+        "targetHandle": "in:image"
+      },
+      {
+        "id": "e_g3_resp",
+        "source": "gemini_3",
+        "sourceHandle": "out:response",
+        "target": "response_main",
+        "targetHandle": "in:result"
+      },
+      {
+        "id": "e_c2_resp",
+        "source": "crop_2",
+        "sourceHandle": "out:output",
+        "target": "response_main",
+        "targetHandle": "in:result"
+      }
+    ]
+  }
+}

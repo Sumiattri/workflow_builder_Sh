@@ -1,0 +1,84 @@
+// NextFlow — Prisma schema
+// Postgres (Neon). Workflows + run history scoped to the Clerk user.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Workflow {
+  id        String   @id @default(cuid())
+  userId    String // Clerk user id
+  name      String   @default("Untitled Workflow")
+  // { nodes: Node[], edges: Edge[], viewport?: {x,y,zoom} }
+  graph     Json     @default("{\"nodes\":[],\"edges\":[]}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  runs Run[]
+
+  @@index([userId])
+}
+
+enum RunStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+  PARTIAL
+}
+
+enum RunScope {
+  FULL
+  PARTIAL
+  SINGLE
+}
+
+enum NodeRunStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+  SKIPPED
+}
+
+model Run {
+  id         String    @id @default(cuid())
+  workflowId String
+  workflow   Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  userId     String
+  status     RunStatus @default(RUNNING)
+  scope      RunScope  @default(FULL)
+  durationMs Int?
+  // snapshot of the graph at the moment the run started
+  snapshot   Json?
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  nodeRuns NodeRun[]
+
+  @@index([workflowId])
+  @@index([userId])
+}
+
+model NodeRun {
+  id           String        @id @default(cuid())
+  runId        String
+  run          Run           @relation(fields: [runId], references: [id], onDelete: Cascade)
+  nodeId       String // react flow node id
+  nodeType     String
+  label        String
+  status       NodeRunStatus @default(PENDING)
+  inputs       Json?
+  output       Json?
+  error        String?
+  durationMs   Int?
+  triggerRunId String? // trigger.dev run id, for realtime correlation
+  startedAt    DateTime?
+  finishedAt   DateTime?
+
+  @@index([runId])
+}
