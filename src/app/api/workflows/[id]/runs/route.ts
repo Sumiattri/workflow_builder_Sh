@@ -9,8 +9,8 @@ import {
   type RunDTO,
   type WorkflowGraph,
 } from "@/lib/types";
-import { runWorkflowTask } from "@/trigger/orchestrator";
-import { auth as triggerAuth } from "@trigger.dev/sdk";
+import { auth as triggerAuth, tasks } from "@trigger.dev/sdk";
+import type { runWorkflowTask } from "@/trigger/orchestrator";
 
 export const runtime = "nodejs";
 
@@ -131,12 +131,15 @@ export async function POST(
   // fire the orchestrator (runs on Trigger.dev). On failure, fail the run.
   try {
     const start = (async () => {
-      const handle = await runWorkflowTask.trigger({
-        runId: run.id,
-        workflowId: id,
-        graph,
-        targetNodeIds: targets,
-      });
+      const handle = await tasks.trigger<typeof runWorkflowTask>(
+        "run-workflow",
+        {
+          runId: run.id,
+          workflowId: id,
+          graph,
+          targetNodeIds: targets,
+        }
+      );
       // public token so the browser can subscribe to this run via Realtime
       const publicAccessToken = await triggerAuth.createPublicToken({
         scopes: { read: { runs: [handle.id] } },
