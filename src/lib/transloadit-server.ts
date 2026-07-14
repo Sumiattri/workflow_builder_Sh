@@ -1,13 +1,13 @@
 // Server-side Transloadit helpers: signed params for browser uploads,
 // and a direct buffer upload used inside the Crop Image Trigger.dev task.
-import { Transloadit } from "transloadit";
 
-function client(): Transloadit {
+async function client() {
   const authKey = process.env.NEXT_PUBLIC_TRANSLOADIT_KEY;
   const authSecret = process.env.TRANSLOADIT_SECRET;
   if (!authKey || !authSecret) {
     throw new Error("Transloadit credentials are not configured.");
   }
+  const { Transloadit } = await import("transloadit");
   return new Transloadit({ authKey, authSecret });
 }
 
@@ -16,12 +16,12 @@ const IMAGE_STORE_STEPS = {
 } as const;
 
 /** Signed params + signature for a direct-from-browser image upload. */
-export function signedUploadParams(): {
+export async function signedUploadParams(): Promise<{
   params: string;
   signature: string;
   url: string;
-} {
-  const c = client();
+}> {
+  const c = await client();
   const templateId = process.env.TRANSLOADIT_TEMPLATE_ID;
   // Pass the params OBJECT; calcSignature injects `auth` (key + expires) and
   // returns the canonical params STRING the signature was computed over. The
@@ -40,7 +40,7 @@ export async function uploadBuffer(
   buffer: Buffer,
   filename: string
 ): Promise<string> {
-  const c = client();
+  const c = await client();
   const { writeFile, mkdtemp, rm } = await import("node:fs/promises");
   const { join } = await import("node:path");
   const { tmpdir } = await import("node:os");

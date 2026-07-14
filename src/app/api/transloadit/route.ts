@@ -10,7 +10,7 @@ export async function POST() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    const signed = signedUploadParams();
+    const signed = await signedUploadParams();
     return NextResponse.json(signed);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Signing failed";
